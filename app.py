@@ -304,11 +304,6 @@ else:
                 use_container_width=True,
                 hide_index=True
             ) 
-       
-
-    elif pagina == "Cadastrar usuário":
-        st.title("Cadastrar Usuário")
-        st.info("Página de cadastro em construção...")
 
     elif pagina == "Registrar demanda":
         st.title("Registrar Demanda")
