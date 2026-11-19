@@ -170,6 +170,11 @@ def excluir_demanda(id_demanda):
     conn.commit()
     conn.close()
 
+def mostrar_qrcode(url_do_site):
+    url_api = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={url_do_site}"
+    st.sidebar.divider()
+    st.sidebar.image(url_api, caption="Escaneie para testar o protótipo", use_container_width=True)
+
 criar_tabelas()
 
 if "usuario_logado" not in st.session_state:
@@ -206,6 +211,8 @@ if st.session_state["usuario_logado"] is None:
     st.sidebar.markdown(logo_svg, unsafe_allow_html=True)
     st.sidebar.title("ORDEN.NA")
     st.sidebar.caption("Acesso restrito ao sistema")
+
+    mostrar_qrcode("https://ordenna-8fj6knskwucsdsxsumximw.streamlit.app/")
 
     col_esq, col_centro, col_dir = st.columns([1, 2, 1])
     with col_centro:
@@ -249,6 +256,8 @@ else:
         menus.insert(1, "Cadastrar usuário")
 
     pagina = st.sidebar.radio("Navegação", menus)
+
+    mostrar_qrcode("https://ordenna-8fj6knskwucsdsxsumximw.streamlit.app/")
 
     st.sidebar.divider()
     if st.sidebar.button("Sair da conta", use_container_width=True):
@@ -304,6 +313,49 @@ else:
                 use_container_width=True,
                 hide_index=True
             ) 
+
+    elif pagina == "Cadastrar usuário":
+        st.title("Cadastrar Usuário")
+        st.write("Adicione novos membros da equipe ao sistema.")
+        
+        with st.form("form_novo_usuario"):
+            nome_novo = st.text_input("Nome completo")
+            email_novo = st.text_input("E-mail")
+            senha_nova = st.text_input("Senha", type="password")
+            
+            col1, col2 = st.columns(2)
+            setor_novo = col1.text_input("Setor")
+            perfil_novo = col2.selectbox("Perfil de acesso", ["Colaborador", "Gestor", "Administrador"])
+            
+            salvar_usuario = st.form_submit_button("Cadastrar Usuário")
+            
+            if salvar_usuario:
+                if nome_novo and email_novo and senha_nova and setor_novo:
+                    try:
+                        conn = conectar()
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            INSERT INTO usuario (nome, email, senha, setor, perfil_acesso)
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (
+                            nome_novo, 
+                            email_novo.strip(), 
+                            criptografar_senha(senha_nova), 
+                            setor_novo, 
+                            perfil_novo
+                        ))
+                        conn.commit()
+                        conn.close()
+                        st.success(f"Usuário '{nome_novo}' cadastrado com sucesso!")
+                        
+                        import time
+                        time.sleep(1.5)
+                        st.rerun()
+                        
+                    except sqlite3.IntegrityError:
+                        st.error("Erro: Este e-mail já está cadastrado no sistema.")
+                else:
+                    st.warning("Por favor, preencha todos os campos antes de cadastrar.")
 
     elif pagina == "Registrar demanda":
         st.title("Registrar Demanda")
